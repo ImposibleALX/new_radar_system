@@ -1,0 +1,40 @@
+{
+  "name": "sensor-lock-sandbox",
+  "version": "5.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint \"src/**/*.ts\" \"tests/**/*.ts\"",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "npm run test:unit && npm run test:e2e",
+    "test:unit:watch": "vitest",
+    "test:unit:coverage": "vitest run --coverage",
+    "test:unit": "vitest run",
+    "test:e2e": "playwright test",
+    "test:integration": "npm run test:e2e",
+    "test:e2e:debug": "playwright test --debug",
+    "test:e2e:repeat": "playwright test --repeat-each=5",
+    "test:a11y": "playwright test tests/integration/a11y.spec.ts",
+    "test:ci": "npm run typecheck && npm run lint && npm run test:unit:coverage && npm run test:e2e",
+    "perf:lighthouse": "lhci autorun"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.10.2",
+    "@eslint/js": "^9.18.0",
+    "@lhci/cli": "^0.14.0",
+    "@playwright/test": "^1.50.1",
+    "@vitest/coverage-v8": "^2.1.9",
+    "eslint": "^9.18.0",
+    "eslint-config-prettier": "^9.1.0",
+    "prettier": "^3.4.2",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.20.0",
+    "vite": "^6.1.0",
+    "vitest": "^2.1.8"
+  }
+}

@@ -1,0 +1,48 @@
+{
+    "generatedAt":  "2026-02-12T19:58:32.8420960-05:00",
+    "baseline":  {
+                     "html":  {
+                                  "rawBytes":  152117,
+                                  "gzipBytes":  31119
+                              },
+                     "inlineCss":  {
+                                       "rawBytes":  13339,
+                                       "gzipBytes":  2839
+                                   },
+                     "inlineJs":  {
+                                      "rawBytes":  120794,
+                                      "gzipBytes":  24851
+                                  }
+                 },
+    "refactor":  {
+                     "html":  {
+                                  "rawBytes":  20599,
+                                  "gzipBytes":  4430
+                              },
+                     "criticalCss":  {
+                                         "rawBytes":  1287,
+                                         "gzipBytes":  473
+                                     },
+                     "externalCss":  {
+                                         "rawBytes":  9492,
+                                         "gzipBytes":  2565
+                                     },
+                     "initialJs":  {
+                                       "rawBytes":  65749,
+                                       "gzipBytes":  19785,
+                                       "chunks":  [
+                                                      "index-ClgrnAGc.js",
+                                                      "ui-Blfh9LvQ.js"
+                                                  ]
+                                   },
+                     "lazyJs":  {
+                                    "rawBytes":  12119,
+                                    "gzipBytes":  5145,
+                                    "chunks":  [
+                                                   "io-Bd4UdK4a.js",
+                                                   "perf-N-GoOzRd.js",
+                                                   "core-DMBxjNE4.js"
+                                               ]
+                                }
+                 }
+}

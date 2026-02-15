@@ -1,0 +1,25 @@
+{
+    "generatedAt":  "2026-02-12T20:00:56.3109669-05:00",
+    "baselineLegacy":  {
+                           "url":  "http://127.0.0.1:4173/legacy/stats_complete.legacy.html",
+                           "performance":  1,
+                           "accessibility":  0.75,
+                           "bestPractices":  0.96,
+                           "seo":  0.82,
+                           "fcpMs":  940.90,
+                           "lcpMs":  940.90,
+                           "ttfbMs":  2.04,
+                           "cls":  0
+                       },
+    "refactor":  {
+                     "url":  "http://127.0.0.1:4173/",
+                     "performance":  0.98,
+                     "accessibility":  0.92,
+                     "bestPractices":  0.93,
+                     "seo":  0.82,
+                     "fcpMs":  1072.38,
+                     "lcpMs":  1127.38,
+                     "ttfbMs":  14.68,
+                     "cls":  0.0885
+                 }
+}

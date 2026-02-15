@@ -1,0 +1,531 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sensor and Lock Mechanics Sandbox v4.3</title>
+    <style id="critical-css">
+      :root {
+        --bg-color: #000;
+        --panel-bg: #121924;
+        --text-main: #e8edf5;
+        --border: #2a3442;
+        --accent: #ff7aa2;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg-color);
+        color: var(--text-main);
+        font-family:
+          Segoe UI,
+          Arial,
+          sans-serif;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      header {
+        height: 40px;
+        background: var(--panel-bg);
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        padding: 0 1rem;
+        justify-content: space-between;
+      }
+      #workspace {
+        flex: 1;
+        display: flex;
+        overflow: hidden;
+      }
+      #viewport {
+        flex: 1;
+        position: relative;
+        overflow: hidden;
+      }
+      #controls {
+        width: 460px;
+        background: var(--panel-bg);
+        border-left: 1px solid var(--border);
+        overflow-y: auto;
+      }
+      canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+      h1 {
+        font-size: 14px;
+        margin: 0;
+        color: var(--accent);
+      }
+    </style>
+    <link rel="stylesheet" href="/src/styles/app.css" />
+  </head>
+  <body>
+    <header>
+      <div class="topbar-left">
+        <h1>Sensor and Lock Mechanics Sandbox v4.3</h1>
+        <div class="flex-row">
+          <button id="btn-play">Pause</button>
+          <button id="btn-step">Step</button>
+          <button id="btn-reset">Reset</button>
+        </div>
+      </div>
+      <div class="flex-row">
+        <button
+          id="btn-telemetry-toggle"
+          title="Toggle telemetry overlays"
+        >
+          Telemetry
+        </button>
+        <button id="btn-test-preset" data-testid="btn-import-state">Import State</button>
+        <button id="btn-assumptions">System Info</button>
+        <button id="btn-export" data-testid="btn-export-state">Export State</button>
+        <button id="btn-run-tests">Run Perf Tests</button>
+      </div>
+    </header>
+
+    <div id="workspace">
+      <div id="viewport">
+        <canvas id="main-canvas" data-testid="main-canvas"></canvas>
+        <div id="overlay-ui">
+          <div>SELECTED POS: <span id="hud-selected-pos">0,0</span></div>
+          <div>SELECTION MODE: ACTIVE</div>
+          <div>CONTACTS: <span id="hud-contacts">0</span></div>
+          <div>LOCK OUT: <span id="hud-lock-outgoing">NONE (0%)</span></div>
+          <div>LOCK IN: <span id="hud-lock-incoming">NONE</span></div>
+          <div>WEAPON: <span id="hud-weapon-name">NONE</span></div>
+          <div>HIT PROB: <span id="hud-hit-prob">0%</span></div>
+          <div class="hud-selection" id="hud-selection"></div>
+        </div>
+        <div id="range-legend" class="visible" data-testid="range-legend">
+          <div class="legend-title">RANGE LEGEND</div>
+          <div id="legend-static" data-testid="legend-static"></div>
+          <div class="legend-title legend-title-sub">LIVE RINGS</div>
+          <div id="legend-dynamic" data-testid="legend-dynamic"></div>
+          <div class="legend-title legend-title-sub">TESTER DIAGNOSTICS</div>
+          <div id="legend-diagnostics" data-testid="legend-diagnostics"></div>
+        </div>
+        <div id="threat-warning" class="threat-indicator">INCOMING LOCK</div>
+      </div>
+      <div id="controls">
+        <div class="panel-section">
+          <div class="panel-title">CONTROL LEGEND</div>
+          <div class="legend-row">
+            <div><span class="tag tag-sys">SYS</span>System</div>
+            <div><span class="tag tag-sys">SEL</span>Selected</div>
+            <div><span class="tag tag-tgt">TGT</span>Target</div>
+            <div><span class="tag tag-allie">ALLIE</span>Allie</div>
+            <div><span class="tag tag-enemy">ENEMY</span>Enemy</div>
+          </div>
+        </div>
+
+        <div class="panel-section" id="entity-control-panel" data-testid="entity-control-panel">
+          <div class="panel-title">
+            ENTITY CONTROL <span id="entity-control-id" data-testid="entity-control-id">---</span>
+          </div>
+          <div class="control-group">
+            <label><span class="tag tag-sys">ENT</span>Ship Type</label>
+            <select id="entity-ship-type"></select>
+          </div>
+          <div class="profile-info" id="entity-profile-description"></div>
+
+          <div class="control-group">
+            <label><span class="tag tag-sys">ENT</span>Team</label>
+            <select id="entity-team">
+              <option value="alpha">Team Alpha</option>
+              <option value="beta">Team Beta</option>
+            </select>
+          </div>
+
+          <div class="control-group">
+            <label><span class="tag tag-sys">ENT</span>Velocity (m/s)</label>
+            <div class="dual-input-group">
+              <input type="range" id="entity-vel" min="0" max="2000" step="1" value="0" />
+              <input type="number" id="entity-vel-num" min="0" max="2000" step="1" value="0" />
+            </div>
+          </div>
+          <div class="control-group">
+            <label><span class="tag tag-sys">ENT</span>Heading (deg)</label>
+            <div class="dual-input-group">
+              <input type="range" id="entity-head" min="0" max="360" step="5" value="0" />
+              <input type="number" id="entity-head-num" min="0" max="360" step="1" value="0" />
+            </div>
+          </div>
+          <div class="weapons-container">
+            <h4>
+              WEAPON LOADOUT
+              <button id="btn-add-weapon-slot" class="primary btn-slot-add">+ Add Slot</button>
+            </h4>
+            <div id="entity-weapons-list" data-testid="entity-weapons-list"></div>
+          </div>
+          <div class="control-group">
+            <label><span class="tag tag-sys">ENT</span>Sensor Mode</label>
+            <div class="flex-row" id="sensor-mode-group">
+              <button id="btn-sensor-active">Active</button>
+              <button id="btn-sensor-passive">Passive</button>
+            </div>
+          </div>
+          <div class="control-group">
+            <label><span class="tag tag-sys">ENT</span>Sensor Power</label>
+            <div class="dual-input-group">
+              <input
+                type="range"
+                id="entity-sensor-power"
+                min="0.1"
+                max="2.0"
+                step="0.1"
+                value="1.0"
+              />
+              <input
+                type="number"
+                id="entity-sensor-power-num"
+                min="0.1"
+                max="2.0"
+                step="0.1"
+                value="1.0"
+              />
+            </div>
+          </div>
+          <div class="control-group">
+            <label><span class="tag tag-sys">ENT</span>ECM Level</label>
+            <div class="dual-input-group">
+              <input type="range" id="entity-ecm" min="0" max="5" step="0.1" value="0" />
+              <input type="number" id="entity-ecm-num" min="0" max="5" step="0.1" value="0" />
+            </div>
+          </div>
+
+          <div class="entity-stats-block">
+            <div>Signature: <span id="info-sig" class="value-accent">0</span></div>
+            <div>Activity: <span id="info-activity" class="value-accent">0%</span></div>
+            <div>
+              Weapon Activity: <span id="info-weapon-activity" class="value-accent">0%</span>
+            </div>
+            <div>Detection: <span id="info-detection" class="value-accent">0</span></div>
+          </div>
+
+          <div class="weapon-info-panel is-hidden" id="weapon-info-panel">
+            <h4>ACTIVE WEAPON</h4>
+            <div class="weapon-stat">
+              <span class="weapon-stat-label">Name:</span>
+              <span class="weapon-stat-value" id="weapon-name-display">-</span>
+            </div>
+            <div class="weapon-stat">
+              <span class="weapon-stat-label">Base Accuracy:</span>
+              <span class="weapon-stat-value" id="weapon-accuracy-display">-</span>
+            </div>
+            <div class="weapon-stat">
+              <span class="weapon-stat-label">Effective Range:</span>
+              <span class="weapon-stat-value" id="weapon-range-display">-</span>
+            </div>
+            <div class="weapon-stat">
+              <span class="weapon-stat-label">Activity Weight:</span>
+              <span class="weapon-stat-value" id="weapon-activity-weight-display">-</span>
+            </div>
+            <div class="weapon-stat">
+              <span class="weapon-stat-label">Tracking Speed:</span>
+              <span class="weapon-stat-value" id="weapon-tracking-display">-</span>
+            </div>
+            <div class="weapon-stat">
+              <span class="weapon-stat-label">Guidance:</span>
+              <span class="weapon-stat-value" id="weapon-guidance-display">-</span>
+            </div>
+            <div class="weapon-stat">
+              <span class="weapon-stat-label">Sensitivity:</span>
+              <span class="weapon-stat-value" id="weapon-sensitivity-display">-</span>
+            </div>
+            <div class="section-divider">
+              <div class="weapon-stat">
+                <span class="weapon-stat-label">Distance Factor:</span>
+                <span class="weapon-stat-value" id="weapon-dist-factor">0%</span>
+              </div>
+              <div class="weapon-stat">
+                <span class="weapon-stat-label">Tracking Factor:</span>
+                <span class="weapon-stat-value" id="weapon-track-factor">0%</span>
+              </div>
+              <div class="weapon-stat">
+                <span class="weapon-stat-label">Hit Probability:</span>
+                <span class="weapon-stat-value" id="weapon-hit-prob-display">0%</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="profile-creator">
+            <h4>CREATE CUSTOM SHIP PROFILE</h4>
+            <div class="control-group">
+              <label>Profile Name</label>
+              <input type="text" id="custom-profile-name" placeholder="e.g., Custom Fighter" />
+            </div>
+            <div class="control-group">
+              <label>Base Signature</label>
+              <input type="number" id="custom-profile-sig" min="1" max="200" step="1" value="20" />
+            </div>
+            <div class="control-group">
+              <label>Activity Gain</label>
+              <input
+                type="number"
+                id="custom-profile-gain"
+                min="0.1"
+                max="5.0"
+                step="0.1"
+                value="1.5"
+              />
+            </div>
+            <div class="control-group">
+              <label>Ship Length</label>
+              <select id="custom-profile-size">
+                <option value="250">250 m</option>
+                <option value="500">500 m</option>
+                <option value="1000" selected>1.0 km</option>
+                <option value="2000">2.0 km</option>
+                <option value="4000">4.0 km</option>
+              </select>
+            </div>
+            <div class="control-group">
+              <label>Description</label>
+              <input type="text" id="custom-profile-desc" placeholder="Short description" />
+            </div>
+            <button id="btn-save-profile" class="primary btn-full">Save Profile</button>
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <div class="panel-title">SPAWN DEFAULTS</div>
+          <div class="control-group">
+            <label><span class="tag tag-sys">SYS</span>Default Ship Type</label>
+            <select id="default-ship-profile"></select>
+          </div>
+          <div class="control-group">
+            <label><span class="tag tag-sys">SYS</span>Default Team</label>
+            <select id="default-team">
+              <option value="alpha">Team Alpha</option>
+              <option value="beta">Team Beta</option>
+            </select>
+          </div>
+          <div class="control-group">
+            <label><span class="tag tag-sys">SYS</span>Default Weapon</label>
+            <select id="default-weapon"></select>
+          </div>
+          <div class="profile-info" id="profile-description">
+            Select a ship profile to see description
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <div class="panel-title">DETECTION SYSTEM</div>
+          <div id="params-detection-container"></div>
+        </div>
+
+        <div class="panel-section">
+          <div class="panel-title">TRACKING & LOCK</div>
+          <div id="params-tracking-container"></div>
+        </div>
+
+        <div class="panel-section">
+          <div class="panel-title">WEAPON HIT PROBABILITY</div>
+          <div id="params-weapon-container"></div>
+        </div>
+
+        <div class="panel-section">
+          <div class="panel-title">ADVANCED SYSTEM MATH</div>
+          <div id="params-math-container"></div>
+        </div>
+
+        <div class="panel-section">
+          <div class="panel-title">PERFORMANCE & DEBUG</div>
+          <div class="control-group">
+            <label><span class="tag tag-sys">SYS</span>Telemetry Overlays</label>
+            <input type="checkbox" id="telemetry-toggle" />
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <div class="panel-title">RINGS SYSTEM</div>
+          <div class="control-group">
+            <label><span class="tag tag-sys">SYS</span>Show Range Rings</label>
+            <input type="checkbox" id="show-range-rings" checked />
+          </div>
+          <div class="control-group">
+            <label><span class="tag tag-sys">SYS</span>Show Range Legend</label>
+            <input type="checkbox" id="show-range-legend" checked />
+          </div>
+          <div class="control-group">
+            <label><span class="tag tag-sys">SYS</span>Ring Layer Mode</label>
+            <select id="ring-visibility-mode-select" data-testid="ring-visibility-mode-select">
+              <option value="focused">Focused (selected/hovered)</option>
+              <option value="threat-only">Threat-only (hostiles vs selected)</option>
+              <option value="all">All entities</option>
+            </select>
+          </div>
+          <div id="relative-options" class="relative-options">
+            <div class="control-group">
+              <label>Relative Pairs</label>
+              <select id="relative-mode-select">
+                <option value="selected">Source -> Selected</option>
+                <option value="all">Source -> All Entities</option>
+              </select>
+            </div>
+            <div class="control-group">
+              <label>Include Allies</label>
+              <input type="checkbox" id="relative-include-allies" checked />
+            </div>
+            <div class="control-group">
+              <label>Include Enemies</label>
+              <input type="checkbox" id="relative-include-enemies" checked />
+            </div>
+            <div class="control-group">
+              <label>Nearest Targets (N)</label>
+              <input
+                type="number"
+                id="relative-max-targets"
+                min="1"
+                max="50"
+                value="5"
+                class="input-small"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <div class="panel-title">VIEW CONTROLS</div>
+          <div class="control-group">
+            <label><span class="tag tag-sys">SYS</span>Zoom Level</label>
+            <div class="dual-input-group">
+              <input type="range" id="zoom-slider" min="0" max="1" step="0.001" value="0.43" />
+              <input
+                type="number"
+                id="zoom-val-num"
+                min="0.01"
+                max="5"
+                step="0.001"
+                value="0.15"
+                data-testid="zoom-val-num"
+              />
+            </div>
+          </div>
+          <div class="control-group">
+            <button id="btn-fit-grid" class="primary btn-full" data-testid="btn-fit-grid">
+              Fit Grid
+            </button>
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <div class="panel-title">
+            ENTITIES
+            <button id="btn-spawn" class="primary" data-testid="btn-spawn">Spawn</button>
+          </div>
+          <div id="entity-list"></div>
+        </div>
+
+        <div id="log-panel" tabindex="0" aria-label="System log panel"></div>
+      </div>
+    </div>
+
+    <!-- Modal for Assumptions -->
+    <div id="assumptions-modal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">SYSTEM ASSUMPTIONS & MECHANICS</div>
+        <ul class="assumption-list">
+          <li>
+            <strong>Performance Optimizations:</strong> Heavy math operations (tanh, exp, atan)
+            replaced with cheaper approximations
+          </li>
+          <li>
+            <strong>Activity Level:</strong> Uses softstep (smoothstep) approximation instead of
+            tanh
+          </li>
+          <li>
+            <strong>Signature Computation:</strong> Uses log1p-based approximation for activity
+            boost
+          </li>
+          <li>
+            <strong>Detection Score:</strong> Uses inverse-square falloff with cheaper log1p
+            signature scaling
+          </li>
+          <li>
+            <strong>Angular Tracking:</strong> Uses polynomial approximation instead of atan for
+            tracking difficulty
+          </li>
+          <li>
+            <strong>Clustering:</strong> Spatial hash grid for O(n) average complexity instead of
+            O(n^2)
+          </li>
+          <li>
+            <strong>Distance Caching:</strong> Quantized distance computations reduce redundant
+            calculations
+          </li>
+          <li>
+            <strong>Telemetry:</strong> Toggle overlays ON/OFF independently from simulation and
+            ring systems
+          </li>
+          <li>
+            <strong>Relative Range Rings:</strong> Dedicated ring controls define source/target
+            pairing independently from telemetry overlays
+          </li>
+          <li>
+            <strong>Deterministic:</strong> All outputs are deterministic, no random toggling of
+            debug state
+          </li>
+          <li>
+            <strong>Weapon System:</strong> Pre-baked weapon stats eliminate runtime division, use
+            only multiplication
+          </li>
+          <li>
+            <strong>Guided Weapons:</strong> Respect lock quality for hit probability when guidance
+            type is "guided"
+          </li>
+          <li>
+            <strong>Proportional Combat Stress:</strong> Weapon activity now scales with active
+            weight vs installed weight for all ship sizes
+          </li>
+          <li>
+            <strong>Weapon Array System:</strong> Multiple weapon slots supported with independent
+            counts and activation states
+          </li>
+          <li>
+            <strong>Activity Weighting:</strong> Each weapon type has baseActivityWeight (PD=5,
+            Standard=20, Heavy=50) contributing to signature
+          </li>
+          <li>
+            <strong>Deterministic Weapon Rings:</strong> One ring per active weapon type with stable
+            color hashing
+          </li>
+        </ul>
+        <button id="btn-assumptions-close">Close</button>
+      </div>
+    </div>
+
+    <div id="import-modal" class="modal" data-testid="import-modal">
+      <div class="modal-content">
+        <div class="modal-header">IMPORT STATE FROM JSON</div>
+        <div class="mb-10">
+          <label for="import-file-input">Select JSON file:</label>
+          <input type="file" id="import-file-input" accept=".json" class="file-input" />
+        </div>
+        <div class="modal-actions">
+          <button id="btn-import-confirm" class="primary">Import</button>
+          <button id="btn-import-cancel" data-testid="btn-import-cancel">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <div
+      id="app-update-toast"
+      class="app-update-toast"
+      aria-live="polite"
+      aria-atomic="true"
+      hidden
+    >
+      <span>New version available.</span>
+      <button id="btn-reload-app" class="primary">Reload</button>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

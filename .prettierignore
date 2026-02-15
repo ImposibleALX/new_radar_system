@@ -1,0 +1,9 @@
+dist
+node_modules
+.lighthouseci
+legacy/stats_complete.legacy.html
+stats_complete.html
+package-lock.json
+test-results
+playwright-report
+perf-reports

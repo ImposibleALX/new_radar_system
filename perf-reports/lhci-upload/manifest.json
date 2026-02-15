@@ -1,0 +1,14 @@
+[
+  {
+    "url": "http://127.0.0.1:4173/",
+    "isRepresentativeRun": true,
+    "htmlPath": "C:\\Users\\CHOCOLATE\\Music\\stats\\perf-reports\\lhci-upload\\127_0_0_1-_-2026_02_13_01_00_14.report.html",
+    "jsonPath": "C:\\Users\\CHOCOLATE\\Music\\stats\\perf-reports\\lhci-upload\\127_0_0_1-_-2026_02_13_01_00_14.report.json",
+    "summary": {
+      "performance": 0.98,
+      "accessibility": 0.92,
+      "best-practices": 0.93,
+      "seo": 0.82
+    }
+  }
+]

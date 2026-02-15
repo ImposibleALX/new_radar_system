@@ -1,0 +1,13 @@
+{
+  "entities": [],
+  "config": {
+    "SENSOR_STRENGTH": 70
+  },
+  "zoom": 0.15,
+  "panX": 0,
+  "panY": 0,
+  "defaultShipType": "Heavy Frigate",
+  "defaultTeam": "alpha",
+  "defaultWeapon": "pulse_laser_mk1",
+  "nextSlotId": 1
+}
